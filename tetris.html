@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Tetris</title>
+    <style>
+    	* { padding: 0; margin: 30px; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+    <script src="shape.js" type="text/javascript"></script>
+</head>
+<body>
+
+<canvas id="myCanvas" width="300" height="400"></canvas>
+
+<script>
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+
+	var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, Z: 90, X: 88 };
+	var blockSize = 25;
+	var blockBorder = 2;
+	var gridWidth = canvas.width / blockSize;
+	var gridHeight = canvas.height / blockSize;
+	var grid = [];
+	for (i = 0; i < gridWidth; i++) { 
+    	grid[i] = [];
+	}
+
+	var currentPiece = getRandomShape();
+
+    function addShapeToGrid(shape) {
+    	shape.getBlocks().forEach(function(b) {
+		    grid[b.x][b.y] = currentPiece.color;
+		});
+    }
+
+    function getCompletedRows(shape) {
+    	var completedRows = [];
+    	var affectedRows = new Set();
+    	shape.getBlocks().map(function(b) {
+    		affectedRows.add(b.y);
+    	});
+
+    	affectedRows.forEach(function(y) {
+    		var rowComplete = true;
+    		for(x = 0; x < gridWidth; x++) {
+    			if (grid[x][y] == null) rowComplete = false;
+    		}
+		    if (rowComplete) completedRows.push(y);
+		});
+		return completedRows;
+    }
+
+    function removeCompletedRows(rows) {
+    	rows.forEach(function(y) {
+    		for(x = 0; x < gridWidth; x++) {
+    			grid[x].splice(y,1);
+    			grid[x].unshift(null);
+    		}
+    	});
+    }
+
+    function drawBlock(x, y, color) {
+    	ctx.fillStyle = color;
+    	ctx.fillRect(x*blockSize+(blockBorder/2), y*blockSize+(blockBorder/2), blockSize-blockBorder, blockSize-blockBorder);	
+    }
+
+	function drawGrid() {
+	    for (i = 0; i < gridWidth; i++) { 
+	    	for (j = 0; j < gridHeight; j++) {
+	    		if (grid[i][j] != null) drawBlock(i, j,  grid[i][j]);
+			}
+		}
+	}
+
+	function isShapeLanded(shape) {
+		var isShapeLanded = false;
+    	shape.getBlocks().forEach(function(b) {
+    		if (b.y == gridHeight - 1 || grid[b.x][b.y+1] != null) {
+    			isShapeLanded = true;
+    		}
+		});
+		return isShapeLanded;
+	}
+
+	function isGameOver(shape) {
+		var isGameOver = false;
+    	shape.getBlocks().forEach(function(b) {
+    		if (b.y < 0) {
+    			isGameOver = true;
+    		}
+		});
+		return isGameOver;
+	}
+
+	function clearGrid(){
+		for (i = 0; i < gridWidth; i++) { 
+    		grid[i] = [];
+		}
+	}
+
+	function drawShape(shape) {
+    	shape.getBlocks().forEach(function(b) {
+		    drawBlock(b.x, b.y, shape.color);
+		});
+    }
+
+    function moveShapeLeft(shape) {
+    	var canMoveLeft = true;
+    	shape.getBlocks().forEach(function(b) {
+		    if (b.x == 0 || grid[b.x - 1][b.y] != null) canMoveLeft = false;
+		});
+		if (canMoveLeft) shape.moveLeft();
+    }
+
+    // TODO: Make not as fast when held down
+     function moveShapeRight(shape) {
+    	var canMoveRight = true;
+    	shape.getBlocks().forEach(function(b) {
+		    if (b.x == gridWidth - 1 || grid[b.x + 1][b.y] != null) {canMoveRight = false;}
+		});
+		if (canMoveRight) shape.moveRight();
+    }
+
+     function moveShapeDown(shape) {
+    	var canMoveDown = true;
+    	shape.getBlocks().forEach(function(b) {
+		    if (b.y == gridHeight - 1 || grid[b.x][b.y + 1] != null) {canMoveDown = false;}
+		});
+		if (canMoveDown) {shape.moveDown();}
+    }
+
+    function rotateShapeClockwise(shape) {
+    	var canRotateClockwise = true;
+    	shape.getBlocksRotatedClockwise().forEach(function(b) {
+		    if (b.y >= gridHeight || b.x < 0 || b.x >= gridWidth || grid[b.x][b.y] != null) {canRotateClockwise = false;}
+		});
+		if (canRotateClockwise) {shape.rotateClockwise();}
+    }
+
+    function rotateShapeCounterClockwise(shape) {
+    	var canRotateCounterClockwise = true;
+    	shape.getBlocksRotatedCounterClockwise().forEach(function(b) {
+		    if (b.y >= gridHeight || b.x < 0 || b.x >= gridWidth || grid[b.x][b.y] != null) {canRotateCounterClockwise = false;}
+		});
+		if (canRotateCounterClockwise) {shape.rotateCounterClockwise();}
+    }
+
+    function canPerformMove(shape) {
+    	var canPerformMove = true;
+    	shap.forEach(function(b) {
+		    if (b.y >= gridHeight || b.x < 0 || b.x >= gridWidth || grid[b.x][b.y] != null) {canPerformMove = false;}
+		});
+		return canPerformMove;
+    }
+
+    function getRandomShape() { 	
+	    switch(Math.floor((Math.random() * 7))) {
+	      case 0: return new I();  break;
+	      case 1: return new J();  break;
+	      case 2: return new L();  break;
+	      case 3: return new O();  break;
+	      case 4: return new S();  break;
+	      case 5: return new T();  break;
+	      case 6: return new Z();  break;
+    	}
+    }
+
+	function draw() {
+	    ctx.clearRect(0, 0, canvas.width, canvas.height);
+	    drawGrid();
+	    drawShape(currentPiece);	
+	}
+
+	function game() {
+	    if(isShapeLanded(currentPiece)){
+			addShapeToGrid(currentPiece);
+			removeCompletedRows(getCompletedRows(currentPiece));
+			if(isGameOver(currentPiece)){
+				alert("Game over!");
+				clearGrid();
+			}
+			currentPiece = getRandomShape();
+		}
+		moveShapeDown(currentPiece);
+	}
+
+	setInterval(draw, 10);
+	setInterval(game, 500);
+
+	document.addEventListener("keydown", keyDownHandler, false);
+	function keyDownHandler(e) {
+		switch(e.keyCode) {
+	      case KEY.LEFT:   moveShapeLeft(currentPiece);  break;
+	      case KEY.RIGHT:  moveShapeRight(currentPiece); break;
+	      case KEY.DOWN:   moveShapeDown(currentPiece);  break;
+	      case KEY.Z:      rotateShapeCounterClockwise(currentPiece); break;
+	      case KEY.X:      rotateShapeClockwise(currentPiece); break;
+    	}
+	}
+</script>
+
+</body>
+</html>
